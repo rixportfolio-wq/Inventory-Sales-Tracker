@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Sales Reports{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Sales Reports</h2>
+
+<!-- Date Range Form -->
+<form method="get" action="{{ url_for('reports') }}" class="row g-3 align-items-end mb-4">
+  <div class="col-md-4">
+    <label class="form-label">Start Date</label>
+    <input type="date" class="form-control" name="start" value="{{ start }}" required>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">End Date</label>
+    <input type="date" class="form-control" name="end" value="{{ end }}" required>
+  </div>
+  <div class="col-md-4 d-flex">
+    <button class="btn btn-primary w-100">Generate Report</button>
+  </div>
+</form>
+
+{% if start and end %}
+<!-- Export Buttons -->
+<div class="mb-4 d-flex gap-2 justify-content-end">
+  <a href="{{ url_for('export_sales', fmt='csv', start=start, end=end) }}" class="btn btn-outline-success">Download CSV</a>
+  <a href="{{ url_for('export_sales', fmt='pdf', start=start, end=end) }}" class="btn btn-outline-danger">Download PDF</a>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+  <div class="col-md-6">
+    <div class="stats-card p-3 shadow-sm rounded">
+      <h5>Total Sales</h5>
+      <h3 id="totalSales">₱{{ "%.2f"|format(summary.total_sales) }}</h3>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="stats-card p-3 shadow-sm rounded">
+      <h5>Transactions</h5>
+      <h3 id="totalTransactions">{{ summary.transactions }}</h3>
+    </div>
+  </div>
+</div>
+
+<!-- Sales Trend Line Chart -->
+<div class="card p-4 mb-4 shadow-sm rounded">
+  <h5 class="mb-3">Sales Trend (₱)</h5>
+  <canvas id="salesSummaryChart" height="120"></canvas>
+</div>
+
+<!-- Sales Per Day Bar Chart -->
+<div class="card p-4 shadow-sm rounded">
+  <h5 class="mb-3">Sales by Day</h5>
+  <canvas id="salesBarChart" height="120"></canvas>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const res = await fetch(`/reports/data?start={{ start }}&end={{ end }}`);
+  const data = await res.json();
+
+  if (data.error) return alert(data.error);
+
+  // Line Chart: Sales Trend
+  new Chart(document.getElementById("salesSummaryChart"), {
+    type: "line",
+    data: {
+      labels: data.labels,
+      datasets: [{
+        label: "Daily Sales (₱)",
+        data: data.data,
+        borderColor: "#2a5298",
+        backgroundColor: "rgba(42,82,152,0.15)",
+        fill: true,
+        tension: 0.3,
+        pointBackgroundColor: "#2a5298"
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+      scales: {
+        x: { title: { display: true, text: "Date" } },
+        y: { title: { display: true, text: "Sales (₱)" }, beginAtZero: true }
+      }
+    }
+  });
+
+  // Bar Chart: Sales Per Day
+  new Chart(document.getElementById("salesBarChart"), {
+    type: "bar",
+    data: {
+      labels: data.labels,
+      datasets: [{
+        label: "Sales (₱)",
+        data: data.data,
+        backgroundColor: data.labels.map((_, i) => ["#667eea", "#764ba2", "#43cea2", "#ff9a9e", "#2a5298"][i % 5])
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+      scales: {
+        x: { title: { display: true, text: "Date" } },
+        y: { title: { display: true, text: "Sales (₱)" }, beginAtZero: true }
+      }
+    }
+  });
+});
+</script>
+
+{% endif %}
+{% endblock %}

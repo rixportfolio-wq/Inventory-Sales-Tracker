@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h2>Dashboard</h2>
+
+<div class="row mb-4">
+  <div class="col-md-4">
+    <div class="stats-card">
+      <h5>Products</h5>
+      <h3>{{ product_count }}</h3>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stats-card">
+      <h5>Total Stock</h5>
+      <h3>{{ total_stock }}</h3>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stats-card">
+      <h5>Today's Sales</h5>
+      <h3>₱{{ "%.2f"|format(today_sales) }}</h3>
+    </div>
+  </div>
+</div>
+
+<div class="card p-4 mb-4">
+  <h5 class="mb-3">Sales Trend (Last 7 Days)</h5>
+  <canvas id="salesChart" height="100"></canvas>
+</div>
+
+<div class="card p-4">
+  <h5 class="mb-3">Top 5 Best-Selling Products</h5>
+  <canvas id="topProductsChart" height="100"></canvas>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const res = await fetch("{{ url_for('dashboard_data') }}");
+  const data = await res.json();
+
+  // Sales Trend Chart
+  const salesCtx = document.getElementById("salesChart");
+  new Chart(salesCtx, {
+    type: "line",
+    data: {
+      labels: data.sales.labels,
+      datasets: [{
+        label: "Total Sales (₱)",
+        data: data.sales.data,
+        borderColor: "#2a5298",
+        backgroundColor: "rgba(42,82,152,0.1)",
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: "#2a5298"
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {
+        x: { title: { display: true, text: 'Date' } },
+        y: { title: { display: true, text: 'Sales (₱)' }, beginAtZero: true }
+      }
+    }
+  });
+
+  // Top Products Chart
+  const prodCtx = document.getElementById("topProductsChart");
+  new Chart(prodCtx, {
+    type: "bar",
+    data: {
+      labels: data.top_products.labels,
+      datasets: [{
+        label: "Units Sold",
+        data: data.top_products.data,
+        backgroundColor: ["#667eea", "#764ba2", "#43cea2", "#185a9d", "#ff9a9e"]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {
+        x: { title: { display: true, text: 'Products' } },
+        y: { title: { display: true, text: 'Quantity Sold' }, beginAtZero: true }
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

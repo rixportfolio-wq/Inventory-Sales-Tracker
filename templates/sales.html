@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Sales{% endblock %}
+{% block content %}
+<h2>Record Sale</h2>
+<form method="post" class="col-md-6 mt-3">
+  <div class="mb-3">
+    <label>Product</label>
+    <select name="product_id" class="form-select" required>
+      <option value="">Select product...</option>
+      {% for p in products %}
+      <option value="{{ p.id }}">{{ p.name }} (₱{{ "%.2f"|format(p.price) }}) - {{ p.stock }} in stock</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="mb-3">
+    <label>Quantity</label>
+    <input type="number" class="form-control" name="quantity" required>
+  </div>
+  <button class="btn btn-success">Record Sale</button>
+</form>
+{% endblock %}
