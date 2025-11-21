@@ -15,13 +15,18 @@ app = Flask(__name__)
 app.secret_key = 'secretkey123'
 
 # ---------------- DB CONNECTION ----------------
+import os
+import mysql.connector
+
 def get_db():
     return mysql.connector.connect(
-        host='localhost',
-        user='root',
-        password='Oguira100901',
-        database='inventory_db'
+        host=os.environ.get("DB_HOST"),
+        user=os.environ.get("DB_USER"),
+        password=os.environ.get("DB_PASSWORD"),
+        database=os.environ.get("DB_NAME"),
+        port=int(os.environ.get("DB_PORT"))
     )
+
 
 # ---------------- LOGIN REQUIRED DECORATOR ----------------
 def login_required(f):
